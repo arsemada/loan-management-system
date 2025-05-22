@@ -28,17 +28,37 @@
 </div>
 
 <div class="welcome-message">
-  <p>Hello, <span sec:authentication="name">User</span>!</p>
+  <p>Hello, <span th:text="${firstName != null ? firstName : user.email}">User</span>!</p>
   <p>You have successfully logged in.</p>
 </div>
 
 <div class="info-box">
-  <h3>User Details:</h3>
+  <h3>Your Details:</h3>
   <ul>
-    <li><strong>Email:</strong> <span sec:authentication="name"></span></li>
+    <li><strong>First Name:</strong> <span th:text="${firstName}"></span></li>
+    <li><strong>Last Name:</strong> <span th:text="${lastName}"></span></li>
+    <li><strong>Email:</strong> <span th:text="${email}"></span></li>
     <li><strong>Roles:</strong> <span sec:authentication="principal.authorities"></span></li>
+    <li><strong>Username (for login):</strong> <span sec:authentication="name"></span></li>
   </ul>
 </div>
+
+<div class="info-box" style="margin-top: 20px;">
+  <h3>Quick Actions:</h3>
+  <ul>
+    <li><a th:href="@{/apply-loan}">Apply for a New Loan</a></li>
+    <li><a th:href="@{/my-loans}">View My Loan Applications</a></li>
+    <li><a th:href="@{/profile}">View/Edit Profile</a></li>
+  </ul>
+  <div sec:authorize="hasRole('ADMIN')" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+    <h3>Admin Panel:</h3>
+    <ul>
+      <li><a th:href="@{/admin/loans}">Manage All Loan Applications</a></li>
+      <li><a th:href="@{/admin/users}">Manage Users</a></li>
+    </ul>
+  </div>
+</div>
+
 
 </body>
 </html>
