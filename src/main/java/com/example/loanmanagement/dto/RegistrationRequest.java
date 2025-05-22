@@ -1,5 +1,6 @@
 package com.example.loanmanagement.dto;
 
+import com.example.loanmanagement.entity.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,5 +16,6 @@ public class RegistrationRequest {
     private String email;
     private String firstName;
     private String lastName;
+    private Role role;
 
 }
