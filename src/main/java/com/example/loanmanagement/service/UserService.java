@@ -21,39 +21,31 @@ import java.util.Optional;
 public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
-
     private final PasswordEncoder passwordEncoder;
 
     @Override
     public UserDetails loadUserByUsername(String usernameOrEmail) throws UsernameNotFoundException {
-        // Try to find by username first
+        // This method should correctly search by either username or email for login
         Optional<User> userOptional = userRepository.findByUsername(usernameOrEmail);
 
-        // If not found by username, try to find by email
         if (userOptional.isEmpty()) {
             userOptional = userRepository.findByEmail(usernameOrEmail);
         }
 
-        // If still not found, throw UsernameNotFoundException
         return userOptional.orElseThrow(() ->
                 new UsernameNotFoundException("User not found with username or email: " + usernameOrEmail));
     }
 
-
-
     @Transactional
-
     public User registerNewUser(RegistrationRequest request) {
-
-        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-            throw new IllegalArgumentException("Username already taken.");
-        }
+        // Check for email uniqueness as email is used as username
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("Email already registered.");
+            // Throw an exception that makes sense for the user
+            throw new IllegalArgumentException("User with this email already exists. Please use a different email or log in.");
         }
 
         User newUser = User.builder()
-                .username(request.getUsername())
+                .username(request.getEmail()) // <-- FIX: Use email as username
                 .password(passwordEncoder.encode(request.getPassword()))
                 .email(request.getEmail())
                 .firstName(request.getFirstName())
@@ -64,6 +56,5 @@ public class UserService implements UserDetailsService {
                 .build();
 
         return userRepository.save(newUser);
-
     }
 }
