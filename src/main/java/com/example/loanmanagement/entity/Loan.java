@@ -9,57 +9,50 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.math.BigDecimal; // For precise monetary values
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "loans") // You can adjust table name if needed
+@Table(name = "loans")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EntityListeners(AuditingEntityListener.class) // For automatic createdAt/updatedAt
+@EntityListeners(AuditingEntityListener.class)
 public class Loan {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ManyToOne relationship with User: One user can have many loans
-    @ManyToOne(fetch = FetchType.LAZY) // Lazy fetching for performance
-    @JoinColumn(name = "user_id", nullable = false) // Foreign key column
-    private User user; // The user who applied for this loan
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    @Column(nullable = false, precision = 19, scale = 2) // Standard for monetary values
+    @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
 
-    @Column(nullable = false, precision = 5, scale = 2) // For interest rate (e.g., 5.75%)
+    @Column(nullable = false, precision = 5, scale = 2)
     private BigDecimal interestRate;
 
     @Column(nullable = false)
-    private Integer termMonths; // Loan term in months
+    private Integer termMonths;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private LoanStatus status; // Enum for loan status (PENDING, APPROVED, REJECTED, PAID)
+    private LoanStatus status;
 
-    private String purpose; // Optional: e.g., "Home Improvement", "Education", "Debt Consolidation"
+    private String purpose;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
-    private LocalDateTime applicationDate; // When the loan was applied for
+    private LocalDateTime applicationDate;
 
     @LastModifiedDate
     @Column(nullable = false)
-    private LocalDateTime lastUpdated; // When the loan status or details were last modified
+    private LocalDateTime lastUpdated;
 
-    // You might also want to add:
-    // private LocalDateTime approvalDate;
-    // private LocalDateTime repaymentStartDate;
-    // private BigDecimal monthlyPayment;
-    // ... depending on desired complexity
 
-    // Enum for Loan Status
     public enum LoanStatus {
         PENDING,
         APPROVED,
@@ -67,7 +60,7 @@ public class Loan {
         PAID
     }
 
-    @PrePersist // Called before the entity is first saved (persisted)
+    @PrePersist
     protected void onCreate() {
         if (applicationDate == null) {
             applicationDate = LocalDateTime.now();
@@ -76,11 +69,11 @@ public class Loan {
             lastUpdated = LocalDateTime.now();
         }
         if (status == null) {
-            status = LoanStatus.PENDING; // Default status for new applications
+            status = LoanStatus.PENDING;
         }
     }
 
-    @PreUpdate // Called before the entity is updated
+    @PreUpdate
     protected void onUpdate() {
         lastUpdated = LocalDateTime.now();
     }

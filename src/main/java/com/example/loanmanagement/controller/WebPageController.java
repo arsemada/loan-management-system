@@ -1,24 +1,30 @@
 package com.example.loanmanagement.controller;
 
+import com.example.loanmanagement.dto.LoanApplicationRequest;
 import com.example.loanmanagement.dto.RegistrationRequest;
 import com.example.loanmanagement.entity.Role;
-import com.example.loanmanagement.entity.User; // Import the User entity
+import com.example.loanmanagement.entity.User;
+import com.example.loanmanagement.service.LoanService;
 import com.example.loanmanagement.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import jakarta.validation.Valid; // Ensure this import is present
+
 @Controller
 @RequiredArgsConstructor
 public class WebPageController {
 
     private final UserService userService;
+    private final LoanService loanService; // Inject LoanService
 
     @GetMapping("/")
     public String home() {
@@ -43,8 +49,7 @@ public class WebPageController {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/register";
         } catch (Exception e) {
-
-            e.printStackTrace(); // This is crucial for debugging
+            e.printStackTrace();
             redirectAttributes.addFlashAttribute("error", "An unexpected error occurred during registration.");
             return "redirect:/register";
         }
@@ -69,17 +74,55 @@ public class WebPageController {
 
     @GetMapping("/dashboard")
     public String dashboard(@AuthenticationPrincipal User currentUser, Model model) {
-
-
         if (currentUser != null) {
-            model.addAttribute("user", currentUser); // Add the full user object to the model
+            model.addAttribute("user", currentUser);
             model.addAttribute("firstName", currentUser.getFirstName());
             model.addAttribute("lastName", currentUser.getLastName());
             model.addAttribute("email", currentUser.getEmail());
         } else {
             return "redirect:/login";
         }
-
         return "dashboard";
+    }
+
+    // --- NEW ENDPOINTS FOR LOAN APPLICATION ---
+
+    @GetMapping("/apply-loan")
+    public String showApplyLoanForm(Model model) {
+        model.addAttribute("loanApplicationRequest", new LoanApplicationRequest());
+        return "apply-loan";
+    }
+
+    @PostMapping("/apply-loan")
+    public String processLoanApplication(@Valid @ModelAttribute LoanApplicationRequest request,
+                                         BindingResult bindingResult,
+                                         @AuthenticationPrincipal User currentUser,
+                                         RedirectAttributes redirectAttributes) {
+        if (currentUser == null) {
+            redirectAttributes.addFlashAttribute("error", "You must be logged in to apply for a loan.");
+            return "redirect:/login";
+        }
+
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("error", "Please correct the errors in your application.");
+            // To display specific field errors on the form:
+            // You would need to return "apply-loan" directly instead of "redirect:/apply-loan"
+            // and pass bindingResult errors to the model. For now, we're using a generic flash error.
+            return "redirect:/apply-loan";
+        }
+
+        try {
+            loanService.applyForLoan(request, currentUser);
+            redirectAttributes.addFlashAttribute("success", "Loan application submitted successfully! It is now PENDING review.");
+            // Changed from "/my-loans" to "/dashboard" temporarily until /my-loans is built
+            return "redirect:/dashboard";
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/apply-loan";
+        } catch (Exception e) {
+            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("error", "An unexpected error occurred during loan application.");
+            return "redirect:/apply-loan";
+        }
     }
 }
