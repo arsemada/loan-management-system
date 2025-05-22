@@ -2,7 +2,7 @@ package com.example.loanmanagement.config;
 
 import com.example.loanmanagement.service.UserService;
 import com.example.loanmanagement.service.JwtService;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,18 +19,22 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
 public class SecurityConfiguration {
 
-    private final JwtService jwtService;
-
-
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthFilter, AuthenticationProvider authenticationProvider) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            JwtAuthenticationFilter jwtAuthFilter,
+            AuthenticationProvider authenticationProvider
+    ) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/auth/**").permitAll()
+                        // Allow /api/auth/** AND /api/demo/public (or /api/demo/**) to be public
+                        .requestMatchers("/api/auth/**", "/api/demo/public").permitAll() //
+                        // all /api/demo endpoints to be public (including secured/admin for now, for testing initial access):
+                        // .requestMatchers("/api/auth/**", "/api/demo/**").permitAll() // Alternative if you want all demo paths open for initial testing
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -38,6 +42,14 @@ public class SecurityConfiguration {
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter(
+            JwtService jwtService,
+            UserService userService
+    ) {
+        return new JwtAuthenticationFilter(jwtService, userService);
     }
 
     @Bean
@@ -56,11 +68,5 @@ public class SecurityConfiguration {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
-    }
-
-
-    @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter(UserService userService) {
-        return new JwtAuthenticationFilter(jwtService, userService);
     }
 }
