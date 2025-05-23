@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Loan Applications</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
+        .header { background-color: #333; color: white; padding: 15px 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .header .logout-form button { background-color: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        .header .logout-form button:hover { background-color: #c82333; }
+        .container { background-color: #fff; padding: 20px 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); margin-top: 20px; }
+        h2 { text-align: center; color: #333; margin-bottom: 25px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f2f2f2; color: #333; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .status-PENDING { color: #ffc107; font-weight: bold; } /* Orange */
+        .status-APPROVED { color: #28a745; font-weight: bold; } /* Green */
+        .status-REJECTED { color: #dc3545; font-weight: bold; } /* Red */
+        .status-PAID { color: #6c757d; font-weight: bold; } /* Grey */
+        .no-loans-message { text-align: center; color: #666; margin-top: 30px; font-size: 1.1em; }
+        .back-link { text-align: center; margin-top: 30px; }
+        .back-link a { color: #007bff; text-decoration: none; font-weight: bold; }
+        .back-link a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>My Loan Applications</h1>
+    <form th:action="@{/logout}" method="post" class="logout-form">
+        <button type="submit">Logout</button>
+    </form>
+</div>
+
+<div class="container">
+    <h2>Your Loan History</h2>
+
+    <div th:if="${loans.isEmpty()}" class="no-loans-message">
+        <p>You haven't applied for any loans yet.</p>
+        <p><a th:href="@{/apply-loan}">Apply for your first loan!</a></p>
+    </div>
+
+    <table th:unless="${loans.isEmpty()}">
+        <thead>
+        <tr>
+            <th>Loan ID</th>
+            <th>Amount</th>
+            <th>Interest Rate</th>
+            <th>Term (Months)</th>
+            <th>Purpose</th>
+            <th>Status</th>
+            <th>Application Date</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="loan : ${loans}">
+            <td th:text="${loan.id}">1</td>
+            <td th:text="${#numbers.formatCurrency(loan.amount)}">$1,000.00</td>
+            <td th:text="${#numbers.formatDecimal(loan.interestRate, 1, 2)} + '%'">5.75%</td>
+            <td th:text="${loan.termMonths}">12</td>
+            <td th:text="${loan.purpose}">Home Renovation</td>
+            <td>
+                <span th:classappend="'status-' + ${loan.status}" th:text="${loan.status.name()}">PENDING</span>
+            </td>
+            <td th:text="${#temporals.format(loan.applicationDate, 'dd MMM yyyy HH:mm')}">23 May 2025 10:00</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="back-link">
+        <p><a th:href="@{/dashboard}">Back to Dashboard</a></p>
+    </div>
+</div>
+</body>
+</html>

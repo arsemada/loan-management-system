@@ -4,6 +4,7 @@ import com.example.loanmanagement.dto.LoanApplicationRequest;
 import com.example.loanmanagement.dto.RegistrationRequest;
 import com.example.loanmanagement.entity.Role;
 import com.example.loanmanagement.entity.User;
+import com.example.loanmanagement.entity.Loan;
 import com.example.loanmanagement.service.LoanService;
 import com.example.loanmanagement.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -17,14 +18,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import jakarta.validation.Valid; // Ensure this import is present
+import jakarta.validation.Valid;
+import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
 public class WebPageController {
 
     private final UserService userService;
-    private final LoanService loanService; // Inject LoanService
+    private final LoanService loanService;
 
     @GetMapping("/")
     public String home() {
@@ -85,8 +87,6 @@ public class WebPageController {
         return "dashboard";
     }
 
-    // --- NEW ENDPOINTS FOR LOAN APPLICATION ---
-
     @GetMapping("/apply-loan")
     public String showApplyLoanForm(Model model) {
         model.addAttribute("loanApplicationRequest", new LoanApplicationRequest());
@@ -105,17 +105,14 @@ public class WebPageController {
 
         if (bindingResult.hasErrors()) {
             redirectAttributes.addFlashAttribute("error", "Please correct the errors in your application.");
-            // To display specific field errors on the form:
-            // You would need to return "apply-loan" directly instead of "redirect:/apply-loan"
-            // and pass bindingResult errors to the model. For now, we're using a generic flash error.
             return "redirect:/apply-loan";
         }
 
         try {
             loanService.applyForLoan(request, currentUser);
             redirectAttributes.addFlashAttribute("success", "Loan application submitted successfully! It is now PENDING review.");
-            // Changed from "/my-loans" to "/dashboard" temporarily until /my-loans is built
-            return "redirect:/dashboard";
+            // Now that /my-loans exists, we can redirect there directly
+            return "redirect:/my-loans";
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/apply-loan";
@@ -124,5 +121,19 @@ public class WebPageController {
             redirectAttributes.addFlashAttribute("error", "An unexpected error occurred during loan application.");
             return "redirect:/apply-loan";
         }
+    }
+
+
+    @GetMapping("/my-loans")
+    public String myLoans(@AuthenticationPrincipal User currentUser, Model model) {
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
+
+        // Fetch loans for the current user
+        List<Loan> userLoans = loanService.getLoansByUser(currentUser);
+        model.addAttribute("loans", userLoans);
+
+        return "my-loans";
     }
 }
