@@ -38,6 +38,9 @@ public class Loan {
     @Column(nullable = false)
     private Integer termMonths;
 
+    @Column(precision = 19, scale = 2)
+    private BigDecimal monthlyPayment;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private LoanStatus status;
@@ -51,7 +54,6 @@ public class Loan {
     @LastModifiedDate
     @Column(nullable = false)
     private LocalDateTime lastUpdated;
-
 
     public enum LoanStatus {
         PENDING,

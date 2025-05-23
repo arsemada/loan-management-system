@@ -111,7 +111,6 @@ public class WebPageController {
         try {
             loanService.applyForLoan(request, currentUser);
             redirectAttributes.addFlashAttribute("success", "Loan application submitted successfully! It is now PENDING review.");
-            // Now that /my-loans exists, we can redirect there directly
             return "redirect:/my-loans";
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
@@ -123,14 +122,12 @@ public class WebPageController {
         }
     }
 
-
     @GetMapping("/my-loans")
     public String myLoans(@AuthenticationPrincipal User currentUser, Model model) {
         if (currentUser == null) {
             return "redirect:/login";
         }
 
-        // Fetch loans for the current user
         List<Loan> userLoans = loanService.getLoansByUser(currentUser);
         model.addAttribute("loans", userLoans);
 
