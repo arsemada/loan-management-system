@@ -9,7 +9,9 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 public class LoanManagementSystemApplication {
 
 	public static void main(String[] args) {
+
 		SpringApplication.run(LoanManagementSystemApplication.class, args);
+
 	}
 
 }

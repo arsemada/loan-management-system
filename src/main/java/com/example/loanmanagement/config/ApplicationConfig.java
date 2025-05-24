@@ -1,7 +1,7 @@
 package com.example.loanmanagement.config;
 
-import com.example.loanmanagement.repository.UserRepository; // Assuming you have this
-import com.example.loanmanagement.service.UserService; // Import UserService
+import com.example.loanmanagement.repository.UserRepository;
+import com.example.loanmanagement.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,7 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @RequiredArgsConstructor
 public class ApplicationConfig {
 
-    private final UserRepository userRepository; // Inject your UserRepository
+    private final UserRepository userRepository;
 
     @Bean
     public UserDetailsService userDetailsService() {
@@ -34,8 +34,8 @@ public class ApplicationConfig {
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService()); // Use the bean defined above
-        authProvider.setPasswordEncoder(passwordEncoder()); // Use the bean defined above
+        authProvider.setUserDetailsService(userDetailsService());
+        authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
 

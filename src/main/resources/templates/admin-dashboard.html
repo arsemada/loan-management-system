@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            padding-top: 20px;
+        }
+        .container {
+            max-width: 1200px;
+        }
+        .table th, .table td {
+            vertical-align: middle;
+        }
+        .status-badge {
+            padding: .35em .65em;
+            border-radius: .25rem;
+            font-size: 75%;
+            font-weight: 700;
+            color: #fff;
+        }
+        .status-pending { background-color: #ffc107; color: #343a40; } /* Yellow */
+        .status-approved { background-color: #28a745; } /* Green */
+        .status-rejected { background-color: #dc3545; } /* Red */
+        .status-paid { background-color: #007bff; } /* Blue */
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2 class="mb-4">Admin Dashboard - Loan Applications</h2>
+
+    <div sec:authorize="isAuthenticated()" class="d-flex justify-content-between align-items-center mb-3">
+        <p>Logged in as: <span sec:authentication="name"></span> (<span sec:authentication="principal.role"></span>)</p>
+        <form th:action="@{/logout}" method="post">
+            <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
+        </form>
+    </div>
+
+    <div class="mb-4">
+        <a th:href="@{/admin/dashboard(filter='PENDING')}"
+           class="btn btn-sm"
+           th:classappend="${filter == 'PENDING' ? 'btn-primary' : 'btn-outline-primary'}">Pending Loans</a>
+        <a th:href="@{/admin/dashboard(filter='APPROVED')}"
+           class="btn btn-sm"
+           th:classappend="${filter == 'APPROVED' ? 'btn-success' : 'btn-outline-success'}">Approved Loans</a>
+        <a th:href="@{/admin/dashboard(filter='REJECTED')}"
+           class="btn btn-sm"
+           th:classappend="${filter == 'REJECTED' ? 'btn-danger' : 'btn-outline-danger'}">Rejected Loans</a>
+        <a th:href="@{/admin/dashboard}"
+           class="btn btn-sm"
+           th:classappend="${filter == null || filter == '' ? 'btn-info' : 'btn-outline-info'}">All Loans (Default Pending)</a>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${success}"></span>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${error}"></span>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+
+    <table class="table table-bordered table-striped">
+        <thead class="thead-dark">
+        <tr>
+            <th>ID</th>
+            <th>Applicant</th>
+            <th>Amount</th>
+            <th>Interest Rate</th>
+            <th>Term (Months)</th>
+            <th>EMI</th>
+            <th>Purpose</th>
+            <th>Application Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="loan : ${loans}">
+            <td th:text="${loan.id}">1</td>
+            <td th:text="${loan.user.username}">user123</td>
+            <td th:text="${#numbers.formatDecimal(loan.amount, 0, 'COMMA', 2, 'POINT')}">10,000.00</td>
+            <td th:text="${#numbers.formatDecimal(loan.interestRate, 0, 'COMMA', 2, 'POINT')} + '%'">5.00%</td>
+            <td th:text="${loan.termMonths}">12</td>
+            <td th:text="${#numbers.formatDecimal(loan.monthlyPayment, 0, 'COMMA', 2, 'POINT')}">856.07</td>
+            <td th:text="${loan.purpose}">Home Renovation</td>
+            <td th:text="${#temporals.format(loan.applicationDate, 'yyyy-MM-dd HH:mm')}">2023-01-15 10:30</td>
+            <td>
+                <span class="status-badge"
+                      th:classappend="'status-' + ${#strings.toLowerCase(loan.status.name())}"
+                      th:text="${loan.status.name()}">PENDING</span>
+                <div th:if="${loan.status.name() == 'REJECTED'}" class="text-muted small">
+                    <span th:text="'Reason: ' + ${loan.rejectedReason}"></span>
+                </div>
+            </td>
+            <td>
+                <div th:if="${loan.status.name() == 'PENDING'}">
+                    <form th:action="@{/admin/loan/approve/{id}(id=${loan.id})}" method="post" style="display: inline-block;">
+                        <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                    </form>
+                    <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" th:data-target="'#rejectModal' + ${loan.id}">Reject</button>
+
+                    <div class="modal fade" th:id="'rejectModal' + ${loan.id}" tabindex="-1" role="dialog" aria-labelledby="rejectModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <form th:action="@{/admin/loan/reject/{id}(id=${loan.id})}" method="post">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="rejectModalLabel">Reject Loan ID: <span th:text="${loan.id}"></span></h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="form-group">
+                                            <label for="reason">Reason for Rejection:</label>
+                                            <textarea class="form-control" id="reason" name="reason" rows="3" required></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                        <button type="submit" class="btn btn-danger">Reject Loan</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div th:if="${loan.status.name() == 'APPROVED'}">
+                    <span class="text-success"><i class="fas fa-check-circle"></i> Approved</span>
+                </div>
+                <div th:if="${loan.status.name() == 'REJECTED'}">
+                    <span class="text-danger"><i class="fas fa-times-circle"></i> Rejected</span>
+                </div>
+            </td>
+        </tr>
+        <tr th:if="${loans.empty}">
+            <td colspan="10" class="text-center">No loans found for the selected status.</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
+</body>
+</html>

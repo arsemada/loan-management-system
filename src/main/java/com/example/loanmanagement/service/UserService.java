@@ -25,7 +25,6 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String usernameOrEmail) throws UsernameNotFoundException {
-        // This method should correctly search by either username or email for login
         Optional<User> userOptional = userRepository.findByUsername(usernameOrEmail);
 
         if (userOptional.isEmpty()) {
@@ -38,14 +37,12 @@ public class UserService implements UserDetailsService {
 
     @Transactional
     public User registerNewUser(RegistrationRequest request) {
-        // Check for email uniqueness as email is used as username
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            // Throw an exception that makes sense for the user
             throw new IllegalArgumentException("User with this email already exists. Please use a different email or log in.");
         }
 
         User newUser = User.builder()
-                .username(request.getEmail()) // <-- FIX: Use email as username
+                .username(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .email(request.getEmail())
                 .firstName(request.getFirstName())
