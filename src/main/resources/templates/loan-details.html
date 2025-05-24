@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Loan Details - ID: ' + ${loan.id}">Loan Details</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
+        .header { background-color: #333; color: white; padding: 15px 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .header .logout-form button { background-color: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        .header .logout-form button:hover { background-color: #c82333; }
+        .container { background-color: #fff; padding: 20px 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); margin-top: 20px; }
+        h2, h3 { text-align: center; color: #333; margin-bottom: 25px; }
+        .loan-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; border: 1px solid #eee; padding: 20px; border-radius: 8px; background-color: #f9f9f9; }
+        .loan-summary div { padding: 5px 0; }
+        .loan-summary strong { color: #555; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f2f2f2; color: #333; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .status-PENDING { color: #ffc107; font-weight: bold; }
+        .status-APPROVED { color: #28a745; font-weight: bold; }
+        .status-REJECTED { color: #dc3545; font-weight: bold; }
+        .status-PAID { color: #6c757d; font-weight: bold; }
+        .status-OVERDUE { color: #dc3545; font-weight: bold; } /* Red for overdue repayments */
+        .back-link { text-align: center; margin-top: 30px; }
+        .back-link a { color: #007bff; text-decoration: none; font-weight: bold; }
+        .back-link a:hover { text-decoration: underline; }
+        .no-repayments-message { text-align: center; color: #666; margin-top: 30px; font-size: 1.1em; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1 th:text="'Loan ID: ' + ${loan.id}">Loan Details</h1>
+    <form th:action="@{/logout}" method="post" class="logout-form">
+        <button type="submit">Logout</button>
+    </form>
+</div>
+
+<div class="container">
+    <h2>Loan Summary</h2>
+
+    <div class="loan-summary">
+        <div><strong>Loan Amount:</strong> <span th:text="${#numbers.formatCurrency(loan.amount)}">$1,000.00</span></div>
+        <div><strong>Interest Rate:</strong> <span th:text="${#numbers.formatDecimal(loan.interestRate, 1, 2)} + '%'">5.75%</span></div>
+        <div><strong>Term (Months):</strong> <span th:text="${loan.termMonths}">12</span></div>
+        <div><strong>Monthly Payment (EMI):</strong> <span th:text="${#numbers.formatCurrency(loan.monthlyPayment)}">$86.07</span></div>
+        <div><strong>Purpose:</strong> <span th:text="${loan.purpose}">Home Renovation</span></div>
+        <div><strong>Status:</strong> <span th:classappend="'status-' + ${loan.status}" th:text="${loan.status.name()}">PENDING</span></div>
+        <div><strong>Application Date:</strong> <span th:text="${#temporals.format(loan.applicationDate, 'dd MMM yyyy HH:mm')}">23 May 2025 10:00</span></div>
+        <div><strong>Last Updated:</strong> <span th:text="${#temporals.format(loan.lastUpdated, 'dd MMM yyyy HH:mm')}">23 May 2025 10:00</span></div>
+    </div>
+
+    <h3>Repayment Schedule</h3>
+
+    <div th:if="${repayments.isEmpty()}" class="no-repayments-message">
+        <p>No repayment schedule available for this loan yet.</p>
+    </div>
+
+    <table th:unless="${repayments.isEmpty()}">
+        <thead>
+        <tr>
+            <th>Installment No.</th>
+            <th>Due Date</th>
+            <th>Total Payment (EMI)</th>
+            <th>Principal</th>
+            <th>Interest</th>
+            <th>Status</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="repayment, iterStat : ${repayments}">
+            <td th:text="${iterStat.count}">1</td>
+            <td th:text="${#temporals.format(repayment.dueDate, 'dd MMM yyyy')}">23 June 2025</td>
+            <td th:text="${#numbers.formatCurrency(repayment.totalPayment)}">$86.07</td>
+            <td th:text="${#numbers.formatCurrency(repayment.principalAmount)}">$80.00</td>
+            <td th:text="${#numbers.formatCurrency(repayment.interestAmount)}">$6.07</td>
+            <td>
+                <span th:classappend="'status-' + ${repayment.status}" th:text="${repayment.status.name()}">PENDING</span>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="back-link">
+        <p><a th:href="@{/my-loans}">Back to My Loans</a></p>
+    </div>
+</div>
+</body>
+</html>

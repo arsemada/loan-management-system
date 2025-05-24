@@ -5,6 +5,7 @@ import com.example.loanmanagement.dto.RegistrationRequest;
 import com.example.loanmanagement.entity.Role;
 import com.example.loanmanagement.entity.User;
 import com.example.loanmanagement.entity.Loan;
+import com.example.loanmanagement.entity.Repayment;
 import com.example.loanmanagement.service.LoanService;
 import com.example.loanmanagement.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -14,12 +15,14 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 @RequiredArgsConstructor
@@ -89,7 +92,9 @@ public class WebPageController {
 
     @GetMapping("/apply-loan")
     public String showApplyLoanForm(Model model) {
-        model.addAttribute("loanApplicationRequest", new LoanApplicationRequest());
+        if (!model.containsAttribute("loanApplicationRequest")) {
+            model.addAttribute("loanApplicationRequest", new LoanApplicationRequest());
+        }
         return "apply-loan";
     }
 
@@ -104,6 +109,8 @@ public class WebPageController {
         }
 
         if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.loanApplicationRequest", bindingResult);
+            redirectAttributes.addFlashAttribute("loanApplicationRequest", request);
             redirectAttributes.addFlashAttribute("error", "Please correct the errors in your application.");
             return "redirect:/apply-loan";
         }
@@ -114,10 +121,12 @@ public class WebPageController {
             return "redirect:/my-loans";
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
+            redirectAttributes.addFlashAttribute("loanApplicationRequest", request);
             return "redirect:/apply-loan";
         } catch (Exception e) {
             e.printStackTrace();
             redirectAttributes.addFlashAttribute("error", "An unexpected error occurred during loan application.");
+            redirectAttributes.addFlashAttribute("loanApplicationRequest", request);
             return "redirect:/apply-loan";
         }
     }
@@ -132,5 +141,35 @@ public class WebPageController {
         model.addAttribute("loans", userLoans);
 
         return "my-loans";
+    }
+
+    @GetMapping("/loan-details/{id}")
+    public String loanDetails(@PathVariable("id") Long loanId,
+                              @AuthenticationPrincipal User currentUser,
+                              Model model,
+                              RedirectAttributes redirectAttributes) {
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
+
+        Optional<Loan> loanOptional = loanService.getLoanById(loanId);
+        if (loanOptional.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Loan not found.");
+            return "redirect:/my-loans";
+        }
+
+        Loan loan = loanOptional.get();
+
+        if (!loan.getUser().getId().equals(currentUser.getId())) {
+            redirectAttributes.addFlashAttribute("error", "You are not authorized to view this loan.");
+            return "redirect:/my-loans";
+        }
+
+        List<Repayment> repayments = loanService.getRepaymentsForLoan(loan);
+
+        model.addAttribute("loan", loan);
+        model.addAttribute("repayments", repayments);
+
+        return "loan-details";
     }
 }

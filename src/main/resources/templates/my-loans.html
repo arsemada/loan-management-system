@@ -57,7 +57,9 @@
         </thead>
         <tbody>
         <tr th:each="loan : ${loans}">
-            <td th:text="${loan.id}">1</td>
+            <td>
+                <a th:href="@{/loan-details/{id}(id=${loan.id})}" th:text="${loan.id}">1</a>
+            </td>
             <td th:text="${#numbers.formatCurrency(loan.amount)}">$1,000.00</td>
             <td th:text="${#numbers.formatDecimal(loan.interestRate, 1, 2)} + '%'">5.75%</td>
             <td th:text="${loan.termMonths}">12</td>
