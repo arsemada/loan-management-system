@@ -22,6 +22,7 @@
         .status-PENDING { color: #ffc107; font-weight: bold; }
         .status-APPROVED { color: #28a745; font-weight: bold; }
         .status-REJECTED { color: #dc3545; font-weight: bold; }
+        .status-DISBURSED { color: #007bff; font-weight: bold; } /* Added DISBURSED status styling */
         .status-PAID { color: #6c757d; font-weight: bold; }
         .status-OVERDUE { color: #dc3545; font-weight: bold; } /* Red for overdue repayments */
         .back-link { text-align: center; margin-top: 30px; }
@@ -48,12 +49,12 @@
         <div><strong>Term (Months):</strong> <span th:text="${loan.durationMonths}">12</span></div>
         <div><strong>Purpose:</strong> <span th:text="${loan.purpose}">Home Renovation</span></div>
         <div><strong>Status:</strong> <span th:classappend="'status-' + ${loan.status}" th:text="${loan.status.name()}">PENDING</span></div>
-        <div><strong>Application Date:</strong> <span th:text="${#temporals.format(loan.applicationDate, 'dd MMM bede HH:mm')}">23 May 2025 10:00</span></div>
-        <div><strong>Last Updated:</strong> <span th:text="${#temporals.format(loan.lastUpdated, 'dd MMM bede HH:mm')}">23 May 2025 10:00</span></div>
+        <div><strong>Application Date:</strong> <span th:text="${#temporals.format(loan.applicationDate, 'dd MMM yyyy HH:mm')}">23 May 2025 10:00</span></div>
+        <div><strong>Last Updated:</strong> <span th:text="${#temporals.format(loan.lastUpdated, 'dd MMM yyyy HH:mm')}">23 May 2025 10:00</span></div>
 
-        <div th:if="${loan.approvedDate != null}"><strong>Approved Date:</strong> <span th:text="${#temporals.format(loan.approvedDate, 'dd MMM bede HH:mm')}"></span></div>
+        <div th:if="${loan.approvedDate != null}"><strong>Approved Date:</strong> <span th:text="${#temporals.format(loan.approvedDate, 'dd MMM yyyy HH:mm')}"></span></div>
         <div th:if="${loan.approvedAmount != null}"><strong>Approved Amount:</strong> <span th:text="${#numbers.formatCurrency(loan.approvedAmount)}"></span></div>
-        <div th:if="${loan.loanStartDate != null}"><strong>Loan Start Date:</strong> <span th:text="${#temporals.format(loan.loanStartDate, 'dd MMM bede HH:mm')}"></span></div>
+        <div th:if="${loan.loanStartDate != null}"><strong>Loan Start Date:</strong> <span th:text="${#temporals.format(loan.loanStartDate, 'dd MMM yyyy HH:mm')}"></span></div>
         <div th:if="${loan.rejectedReason != null}"><strong>Rejected Reason:</strong> <span th:text="${loan.rejectedReason}"></span></div>
 
     </div>
@@ -73,18 +74,20 @@
             <th>Principal</th>
             <th>Interest</th>
             <th>Status</th>
-            <th>Payment Date</th> </tr>
+            <th>Payment Date</th>
+        </tr>
         </thead>
         <tbody>
-        <tr th:each="repayment : ${repayments}"> <td th:text="${repayment.installmentNumber}">1</td>
-            <td th:text="${#temporals.format(repayment.dueDate, 'dd MMM bede')}">23 June 2025</td>
+        <tr th:each="repayment : ${repayments}">
+            <td th:text="${repayment.installmentNumber}">1</td>
+            <td th:text="${#temporals.format(repayment.dueDate, 'dd MMM yyyy')}">23 June 2025</td>
             <td th:text="${#numbers.formatCurrency(repayment.totalPayment)}">$86.07</td>
             <td th:text="${#numbers.formatCurrency(repayment.principalAmount)}">$80.00</td>
             <td th:text="${#numbers.formatCurrency(repayment.interestAmount)}">$6.07</td>
             <td>
                 <span th:classappend="'status-' + ${repayment.status}" th:text="${repayment.status.name()}">PENDING</span>
             </td>
-            <td th:text="${repayment.paymentDate ? #temporals.format(repayment.paymentDate, 'dd MMM bede HH:mm') : 'N/A'}">N/A</td>
+            <td th:text="${repayment.paymentDate != null ? #temporals.format(repayment.paymentDate, 'dd MMM yyyy HH:mm') : 'N/A'}">N/A</td>
         </tr>
         </tbody>
     </table>
