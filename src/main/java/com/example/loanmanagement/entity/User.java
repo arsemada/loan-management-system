@@ -18,14 +18,14 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "_user") // Good practice to avoid SQL keyword conflict with 'user'
+@Table(name = "_user")
 public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String username; // Renamed from email as username is used for login
+    private String username;
     private String email;
     private String password;
     private String firstName;
@@ -35,12 +35,11 @@ public class User implements UserDetails {
     private LocalDateTime registrationDate;
 
     @Enumerated(EnumType.STRING)
-    private Role role; // Your Role enum (e.g., CUSTOMER, ADMIN)
+    private Role role;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // THIS IS THE CRITICAL CHANGE:
-        // Spring Security's hasRole() expects roles to be prefixed with "ROLE_"
+
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
@@ -51,26 +50,26 @@ public class User implements UserDetails {
 
     @Override
     public String getUsername() {
-        return username; // This method should return the field used for login (e.g., username or email)
+        return username;
     }
 
     @Override
     public boolean isAccountNonExpired() {
-        return true; // Return true unless you implement account expiration logic
+        return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true; // Return true unless you implement account locking logic
+        return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true; // Return true unless you implement credential expiration logic
+        return true;
     }
 
     @Override
     public boolean isEnabled() {
-        return true; // Return true unless you implement account enabling/disabling logic
+        return true;
     }
 }

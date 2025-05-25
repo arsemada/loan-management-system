@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EntityListeners(AuditingEntityListener.class) // <--- ADD THIS LINE
+@EntityListeners(AuditingEntityListener.class)
 public class Repayment {
 
     @Id
@@ -52,14 +52,14 @@ public class Repayment {
     @Column(name = "payment_date")
     private LocalDateTime paymentDate;
 
-    // --- Audit Fields for Repayment ---
-    @CreatedDate // <--- ADD THIS LINE
-    @Column(nullable = false, updatable = false) // <--- ADD THIS LINE
-    private LocalDateTime createdDate; // <--- ADD THIS FIELD
 
-    @LastModifiedDate // <--- ADD THIS LINE
-    @Column(nullable = false) // <--- ADD THIS LINE
-    private LocalDateTime lastUpdated; // <--- ADD THIS FIELD
+    @CreatedDate
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdDate;
+
+    @LastModifiedDate
+    @Column(nullable = false)
+    private LocalDateTime lastUpdated;
 
     public enum RepaymentStatus {
         PENDING,

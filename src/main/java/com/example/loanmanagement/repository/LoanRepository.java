@@ -10,7 +10,7 @@ import java.util.List;
 
 @Repository
 public interface LoanRepository extends JpaRepository<Loan, Long> {
-    List<Loan> findByCustomer(User customer); // To find loans for a specific customer
-    List<Loan> findByStatus(Loan.LoanStatus status); // To find loans by status (e.g., PENDING for admin)
-    // You might also need findByCustomerId(Long customerId) depending on how you pass user info
+    List<Loan> findByCustomer(User customer);
+    List<Loan> findByStatus(Loan.LoanStatus status);
+
 }

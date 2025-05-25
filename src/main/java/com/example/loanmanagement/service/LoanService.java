@@ -30,11 +30,7 @@ public class LoanService {
     private final LoanRepository loanRepository;
     private final RepaymentRepository repaymentRepository;
 
-    /**
-     * Allows a customer to apply for a loan.
-     * Initial status is PENDING. EMI and schedule are NOT generated here.
-     * They are generated upon admin approval.
-     */
+
     @Transactional
     public Loan applyForLoan(LoanApplicationRequest request, User customer) {
         log.info("Attempting to apply for loan for user: {} with loanAmount: {}, durationMonths: {}, purpose: {}, annualIncome: {}",
@@ -74,14 +70,7 @@ public class LoanService {
         return repaymentRepository.findByLoanOrderByDueDateAsc(loan);
     }
 
-    /**
-     * Calculates the Equated Monthly Installment (EMI) for a loan.
-     * EMI = P * R * (1 + R)^N / ((1 + R)^N - 1)
-     * Where:
-     * P = loan amount (principal)
-     * R = monthly interest rate (annual interest rate / 1200)
-     * N = tenure (months)
-     */
+
     public BigDecimal calculateEMI(BigDecimal principal, BigDecimal annualInterestRate, Integer durationMonths) {
         log.debug("Calculating EMI for principal: {}, annualInterestRate: {}, durationMonths: {}", principal, annualInterestRate, durationMonths);
 

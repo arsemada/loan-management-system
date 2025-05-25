@@ -26,12 +26,12 @@ public class Loan {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Link to the User (customer) who applied for the loan
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false)
     private User customer;
 
-    // --- Core Application Fields (from customer) ---
+
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal loanAmount;
 
@@ -48,7 +48,7 @@ public class Loan {
     @Column(name = "annual_income", nullable = false, precision = 19, scale = 2)
     private BigDecimal annualIncome;
 
-    // --- Status and Approval/Rejection Fields (managed by Admin) ---
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private LoanStatus status;

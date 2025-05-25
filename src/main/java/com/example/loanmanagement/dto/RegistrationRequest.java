@@ -16,7 +16,6 @@ import jakarta.validation.constraints.Size;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RegistrationRequest {
-    // REMOVE: private String username; <--- Delete this line
 
     @NotBlank(message = "Password is required")
     @Size(min = 6, message = "Password must be at least 6 characters long")
@@ -32,5 +31,5 @@ public class RegistrationRequest {
     @NotBlank(message = "Last name is required")
     private String lastName;
 
-    private Role role; // Set in controller, not from form
+    private Role role;
 }

@@ -35,7 +35,7 @@ public class AuthController {
         try {
             User registeredUser = userService.registerNewUser(request);
 
-            UserDetails userDetails = userService.loadUserByUsername(registeredUser.getUsername()); // Or use registeredUser directly if it implements UserDetails
+            UserDetails userDetails = userService.loadUserByUsername(registeredUser.getUsername());
             String jwtToken = jwtService.generateToken(userDetails);
 
 
