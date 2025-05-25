@@ -14,6 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.context.annotation.Lazy; // <--- ADD THIS IMPORT!
 
 import java.io.IOException;
 
@@ -22,7 +23,9 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
-    private final UserService userService;
+
+    @Lazy // <--- ADD THIS @Lazy ANNOTATION HERE!
+    private final UserService userService; // This dependency will now be lazily initialized
 
     @Override
     protected void doFilterInternal(
@@ -30,9 +33,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
-
-
-
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
         final String username;
@@ -46,6 +46,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         username = jwtService.extractUsername(jwt);
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            // When userService.loadUserByUsername() is called, the userService bean will be fully initialized
             UserDetails userDetails = this.userService.loadUserByUsername(username);
 
             if (jwtService.isTokenValid(jwt, userDetails)) {

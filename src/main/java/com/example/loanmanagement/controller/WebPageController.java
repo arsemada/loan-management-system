@@ -80,7 +80,7 @@ public class WebPageController {
     @GetMapping("/dashboard")
     public String dashboard(@AuthenticationPrincipal User currentUser, Model model) {
         if (currentUser != null) {
-            model.addAttribute("user", currentUser);
+            model.addAttribute("user", currentUser); // This 'user' is fine, it's just a model attribute name
             model.addAttribute("firstName", currentUser.getFirstName());
             model.addAttribute("lastName", currentUser.getLastName());
             model.addAttribute("email", currentUser.getEmail());
@@ -109,8 +109,9 @@ public class WebPageController {
         }
 
         if (bindingResult.hasErrors()) {
-            redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.loanApplicationRequest", bindingResult);
+            // Add existing request to flash attributes to pre-fill form fields upon redirect
             redirectAttributes.addFlashAttribute("loanApplicationRequest", request);
+            redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.loanApplicationRequest", bindingResult); // Keep this to pass errors
             redirectAttributes.addFlashAttribute("error", "Please correct the errors in your application.");
             return "redirect:/apply-loan";
         }
@@ -121,12 +122,12 @@ public class WebPageController {
             return "redirect:/my-loans";
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
-            redirectAttributes.addFlashAttribute("loanApplicationRequest", request);
+            redirectAttributes.addFlashAttribute("loanApplicationRequest", request); // Pass back request on error
             return "redirect:/apply-loan";
         } catch (Exception e) {
             e.printStackTrace();
             redirectAttributes.addFlashAttribute("error", "An unexpected error occurred during loan application.");
-            redirectAttributes.addFlashAttribute("loanApplicationRequest", request);
+            redirectAttributes.addFlashAttribute("loanApplicationRequest", request); // Pass back request on error
             return "redirect:/apply-loan";
         }
     }
@@ -137,7 +138,8 @@ public class WebPageController {
             return "redirect:/login";
         }
 
-        List<Loan> userLoans = loanService.getLoansByUser(currentUser);
+        // CORRECTED LINE: Call the updated service method
+        List<Loan> userLoans = loanService.getLoansByCustomer(currentUser);
         model.addAttribute("loans", userLoans);
 
         return "my-loans";
@@ -160,7 +162,8 @@ public class WebPageController {
 
         Loan loan = loanOptional.get();
 
-        if (!loan.getUser().getId().equals(currentUser.getId())) {
+        // CORRECTED LINE: Use getCustomer() as the field was renamed in Loan entity
+        if (!loan.getCustomer().getId().equals(currentUser.getId())) {
             redirectAttributes.addFlashAttribute("error", "You are not authorized to view this loan.");
             return "redirect:/my-loans";
         }

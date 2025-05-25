@@ -11,6 +11,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "loans")
@@ -25,29 +26,52 @@ public class Loan {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Link to the User (customer) who applied for the loan
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "customer_id", nullable = false)
+    private User customer;
 
+    // --- Core Application Fields (from customer) ---
     @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal amount;
+    private BigDecimal loanAmount;
 
-    @Column(name = "interest_rate", nullable = false, precision = 5, scale = 2)
-    private BigDecimal interestRate;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private LoanType loanType;
 
-    @Column(name = "term_months", nullable = false)
-    private Integer termMonths;
+    @Column(name = "duration_months", nullable = false)
+    private Integer durationMonths;
 
-    @Column(name = "monthly_payment", precision = 19, scale = 2)
-    private BigDecimal monthlyPayment;
+    @Column(name = "purpose", nullable = false)
+    private String purpose;
 
+    @Column(name = "annual_income", nullable = false, precision = 19, scale = 2)
+    private BigDecimal annualIncome;
+
+    // --- Status and Approval/Rejection Fields (managed by Admin) ---
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private LoanStatus status;
 
-    @Column(name = "purpose")
-    private String purpose;
+    @Column(name = "approved_date")
+    private LocalDateTime approvedDate;
 
+    @Column(name = "rejected_reason")
+    private String rejectedReason;
+
+    @Column(name = "approved_amount", precision = 19, scale = 2)
+    private BigDecimal approvedAmount;
+
+    @Column(name = "interest_rate", precision = 5, scale = 2)
+    private BigDecimal interestRate;
+
+    @Column(name = "loan_start_date")
+    private LocalDateTime loanStartDate;
+
+    @Column(name = "monthly_emi", precision = 19, scale = 2)
+    private BigDecimal monthlyEMI;
+
+    // --- Audit Fields ---
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime applicationDate;
@@ -57,18 +81,13 @@ public class Loan {
     private LocalDateTime lastUpdated;
 
 
-    @Column(name = "approved_date")
-    private LocalDateTime approvedDate;
-
-    @Column(name = "rejected_reason")
-    private String rejectedReason;
-
 
     public enum LoanStatus {
         PENDING,
         APPROVED,
         REJECTED,
-        PAID
+        DISBURSED,
+        PAID,
+        OVERDUE
     }
-
 }

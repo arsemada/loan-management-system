@@ -11,10 +11,11 @@
             padding-top: 20px;
         }
         .container {
-            max-width: 1200px;
+            max-width: 1400px; /* Increased max-width to accommodate more columns */
         }
         .table th, .table td {
             vertical-align: middle;
+            font-size: 0.9rem; /* Slightly smaller font for more columns */
         }
         .status-badge {
             padding: .35em .65em;
@@ -22,11 +23,22 @@
             font-size: 75%;
             font-weight: 700;
             color: #fff;
+            display: inline-block; /* For better spacing */
         }
         .status-pending { background-color: #ffc107; color: #343a40; } /* Yellow */
         .status-approved { background-color: #28a745; } /* Green */
         .status-rejected { background-color: #dc3545; } /* Red */
         .status-paid { background-color: #007bff; } /* Blue */
+        .status-disbursed { background-color: #17a2b8; } /* Info Blue */
+        .status-overdue { background-color: #fd7e14; } /* Orange */
+
+        /* Styles for modal forms */
+        .modal-body .form-group {
+            margin-bottom: 1rem;
+        }
+        .modal-body label {
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -47,12 +59,21 @@
         <a th:href="@{/admin/dashboard(filter='APPROVED')}"
            class="btn btn-sm"
            th:classappend="${filter == 'APPROVED' ? 'btn-success' : 'btn-outline-success'}">Approved Loans</a>
+        <a th:href="@{/admin/dashboard(filter='DISBURSED')}"
+           class="btn btn-sm"
+           th:classappend="${filter == 'DISBURSED' ? 'btn-info' : 'btn-outline-info'}">Disbursed Loans</a>
         <a th:href="@{/admin/dashboard(filter='REJECTED')}"
            class="btn btn-sm"
            th:classappend="${filter == 'REJECTED' ? 'btn-danger' : 'btn-outline-danger'}">Rejected Loans</a>
+        <a th:href="@{/admin/dashboard(filter='PAID')}"
+           class="btn btn-sm"
+           th:classappend="${filter == 'PAID' ? 'btn-secondary' : 'btn-outline-secondary'}">Paid Loans</a>
+        <a th:href="@{/admin/dashboard(filter='OVERDUE')}"
+           class="btn btn-sm"
+           th:classappend="${filter == 'OVERDUE' ? 'btn-warning' : 'btn-outline-warning'}">Overdue Loans</a>
         <a th:href="@{/admin/dashboard}"
            class="btn btn-sm"
-           th:classappend="${filter == null || filter == '' ? 'btn-info' : 'btn-outline-info'}">All Loans (Default Pending)</a>
+           th:classappend="${filter == null || filter == '' ? 'btn-dark' : 'btn-outline-dark'}">All Loans</a>
     </div>
 
     <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
@@ -73,26 +94,31 @@
         <tr>
             <th>ID</th>
             <th>Applicant</th>
-            <th>Amount</th>
-            <th>Interest Rate</th>
-            <th>Term (Months)</th>
-            <th>EMI</th>
+            <th>Req. Amount</th>
+            <th>Loan Type</th> <th>Annual Income</th> <th>Duration (Months)</th>
             <th>Purpose</th>
-            <th>Application Date</th>
-            <th>Status</th>
+            <th>App. Date</th>
+            <th>Approved Amount</th> <th>Interest Rate</th> <th>Monthly EMI</th> <th>Status</th>
             <th>Actions</th>
         </tr>
         </thead>
         <tbody>
         <tr th:each="loan : ${loans}">
             <td th:text="${loan.id}">1</td>
-            <td th:text="${loan.user.username}">user123</td>
-            <td th:text="${#numbers.formatDecimal(loan.amount, 0, 'COMMA', 2, 'POINT')}">10,000.00</td>
-            <td th:text="${#numbers.formatDecimal(loan.interestRate, 0, 'COMMA', 2, 'POINT')} + '%'">5.00%</td>
-            <td th:text="${loan.termMonths}">12</td>
-            <td th:text="${#numbers.formatDecimal(loan.monthlyPayment, 0, 'COMMA', 2, 'POINT')}">856.07</td>
-            <td th:text="${loan.purpose}">Home Renovation</td>
+            <td th:text="${loan.customer.username}">user123</td> <td th:text="${#numbers.formatDecimal(loan.loanAmount, 0, 'COMMA', 2, 'POINT')}">10,000.00</td> <td th:text="${loan.loanType}">PERSONAL_LOAN</td> <td th:text="${#numbers.formatDecimal(loan.annualIncome, 0, 'COMMA', 2, 'POINT')}">50,000.00</td> <td th:text="${loan.durationMonths}">12</td> <td th:text="${loan.purpose}">Home Renovation</td>
             <td th:text="${#temporals.format(loan.applicationDate, 'yyyy-MM-dd HH:mm')}">2023-01-15 10:30</td>
+            <td>
+                <span th:if="${loan.approvedAmount != null}" th:text="${#numbers.formatDecimal(loan.approvedAmount, 0, 'COMMA', 2, 'POINT')}">Approved Amount</span>
+                <span th:if="${loan.approvedAmount == null}" class="text-muted">N/A</span>
+            </td>
+            <td>
+                <span th:if="${loan.interestRate != null}" th:text="${#numbers.formatDecimal(loan.interestRate, 0, 'COMMA', 2, 'POINT')} + '%'">5.00%</span>
+                <span th:if="${loan.interestRate == null}" class="text-muted">N/A</span>
+            </td>
+            <td>
+                <span th:if="${loan.monthlyEMI != null}" th:text="${#numbers.formatDecimal(loan.monthlyEMI, 0, 'COMMA', 2, 'POINT')}">856.07</span>
+                <span th:if="${loan.monthlyEMI == null}" class="text-muted">N/A</span>
+            </td>
             <td>
                 <span class="status-badge"
                       th:classappend="'status-' + ${#strings.toLowerCase(loan.status.name())}"
@@ -103,10 +129,43 @@
             </td>
             <td>
                 <div th:if="${loan.status.name() == 'PENDING'}">
-                    <form th:action="@{/admin/loan/approve/{id}(id=${loan.id})}" method="post" style="display: inline-block;">
-                        <button type="submit" class="btn btn-success btn-sm">Approve</button>
-                    </form>
+                    <button type="button" class="btn btn-success btn-sm" data-toggle="modal" th:data-target="'#approveModal' + ${loan.id}">Approve</button>
+
                     <button type="button" class="btn btn-danger btn-sm" data-toggle="modal" th:data-target="'#rejectModal' + ${loan.id}">Reject</button>
+
+                    <div class="modal fade" th:id="'approveModal' + ${loan.id}" tabindex="-1" role="dialog" aria-labelledby="approveModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <form th:action="@{/admin/loan/approve/{id}(id=${loan.id})}" method="post">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="approveModalLabel">Approve Loan ID: <span th:text="${loan.id}"></span></h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="form-group">
+                                            <label th:for="${'approvedAmount-' + loan.id}">Approved Amount:</label>
+                                            <input type="number" step="0.01" class="form-control" th:id="${'approvedAmount-' + loan.id}" name="approvedAmount" th:value="${loan.loanAmount}" required/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label th:for="${'interestRate-' + loan.id}">Annual Interest Rate (%):</label>
+                                            <input type="number" step="0.01" class="form-control" th:id="${'interestRate-' + loan.id}" name="interestRate" value="8.0" required/>
+                                            <small class="form-text text-muted">e.g., 8.0 for 8%</small>
+                                        </div>
+                                        <div class="form-group">
+                                            <label th:for="${'loanDurationMonths-' + loan.id}">Loan Duration (Months):</label>
+                                            <input type="number" class="form-control" th:id="${'loanDurationMonths-' + loan.id}" name="loanDurationMonths" th:value="${loan.durationMonths}" required/>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-success">Approve Loan</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="modal fade" th:id="'rejectModal' + ${loan.id}" tabindex="-1" role="dialog" aria-labelledby="rejectModalLabel" aria-hidden="true">
                         <div class="modal-dialog" role="document">
@@ -120,8 +179,8 @@
                                     </div>
                                     <div class="modal-body">
                                         <div class="form-group">
-                                            <label for="reason">Reason for Rejection:</label>
-                                            <textarea class="form-control" id="reason" name="reason" rows="3" required></textarea>
+                                            <label for="reason-${loan.id}">Reason for Rejection:</label>
+                                            <textarea class="form-control" th:id="${'reason-' + loan.id}" name="reason" rows="3" required></textarea>
                                         </div>
                                     </div>
                                     <div class="modal-footer">
@@ -133,16 +192,13 @@
                         </div>
                     </div>
                 </div>
-                <div th:if="${loan.status.name() == 'APPROVED'}">
-                    <span class="text-success"><i class="fas fa-check-circle"></i> Approved</span>
-                </div>
-                <div th:if="${loan.status.name() == 'REJECTED'}">
-                    <span class="text-danger"><i class="fas fa-times-circle"></i> Rejected</span>
+                <div th:if="${loan.status.name() != 'PENDING'}">
+                    <span class="text-muted small">No action needed</span>
                 </div>
             </td>
         </tr>
         <tr th:if="${loans.empty}">
-            <td colspan="10" class="text-center">No loans found for the selected status.</td>
+            <td colspan="13" class="text-center">No loans found for the selected status.</td>
         </tr>
         </tbody>
     </table>

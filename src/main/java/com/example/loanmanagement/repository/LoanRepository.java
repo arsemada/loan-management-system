@@ -12,7 +12,7 @@ import java.util.Optional;
 public interface LoanRepository extends JpaRepository<Loan, Long> {
 
 
-    List<Loan> findByUser(User user);
+    List<Loan> findByCustomer(User customer);
 
     List<Loan> findByStatus(Loan.LoanStatus status);
 
