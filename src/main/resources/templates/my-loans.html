@@ -60,10 +60,10 @@
             <td>
                 <a th:href="@{/loan-details/{id}(id=${loan.id})}" th:text="${loan.id}">1</a>
             </td>
-            <td th:text="${#numbers.formatCurrency(loan.amount)}">$1,000.00</td>
+            <td th:text="${#numbers.formatCurrency(loan.loanAmount)}">$1,000.00</td>
             <td th:text="${#numbers.formatDecimal(loan.interestRate, 1, 2)} + '%'">5.75%</td>
-            <td th:text="${loan.termMonths}">12</td>
-            <td th:text="${#numbers.formatCurrency(loan.monthlyPayment)}">$86.07</td>
+            <td th:text="${loan.durationMonths}">12</td>
+            <td th:text="${#numbers.formatCurrency(loan.monthlyEMI)}">$86.07</td>
             <td th:text="${loan.purpose}">Home Renovation</td>
             <td>
                 <span th:classappend="'status-' + ${loan.status}" th:text="${loan.status.name()}">PENDING</span>
