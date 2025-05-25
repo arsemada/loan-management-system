@@ -21,7 +21,7 @@ import java.util.Optional;
 public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder; // <--- This is GREAT!
 
     @Override
     public UserDetails loadUserByUsername(String usernameOrEmail) throws UsernameNotFoundException {
@@ -46,7 +46,7 @@ public class UserService implements UserDetailsService {
 
         User newUser = User.builder()
                 .username(request.getEmail()) // Assuming email is used as username for login
-                .password(passwordEncoder.encode(request.getPassword()))
+                .password(passwordEncoder.encode(request.getPassword())) // <--- Password encoding is HERE, this is correct!
                 .email(request.getEmail())
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
