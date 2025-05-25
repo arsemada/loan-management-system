@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.math.BigDecimal; // Import for BigDecimal
+import java.math.BigDecimal;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,13 +36,20 @@ public class AdminController {
                                  @RequestParam(value = "filter", required = false, defaultValue = "PENDING") String filter) {
         List<Loan> loans;
         try {
-            Loan.LoanStatus statusFilter = Loan.LoanStatus.valueOf(filter.toUpperCase());
-            loans = loanService.getLoansByStatus(statusFilter);
-            model.addAttribute("filter", statusFilter.name());
+            // Handle "ALL" filter separately or parse specific status
+            if ("ALL".equalsIgnoreCase(filter)) {
+                loans = loanService.getAllLoans(); // Use existing method to get all loans
+                model.addAttribute("filter", "ALL");
+            } else {
+                // Attempt to parse the status, default to PENDING if invalid or not specified
+                Loan.LoanStatus statusFilter = Loan.LoanStatus.valueOf(filter.toUpperCase());
+                loans = loanService.getLoansByStatus(statusFilter); // New method in LoanService
+                model.addAttribute("filter", statusFilter.name());
+            }
         } catch (IllegalArgumentException e) {
-            log.warn("Invalid loan status filter received: {}", filter);
-            // Fallback to PENDING if the filter is invalid
-            loans = loanService.getAllPendingLoans();
+            log.warn("Invalid loan status filter received: {}. Defaulting to PENDING.", filter);
+            // Fallback to PENDING if the filter is invalid or not recognized
+            loans = loanService.getPendingLoans(); // Use the existing method for pending loans
             model.addAttribute("filter", "PENDING");
         }
 
@@ -52,9 +59,9 @@ public class AdminController {
 
     @PostMapping("/loan/approve/{id}")
     public String approveLoan(@PathVariable("id") Long loanId,
-                              @RequestParam("approvedAmount") BigDecimal approvedAmount, // NEW: Get approved amount from form
-                              @RequestParam("interestRate") BigDecimal interestRate,     // NEW: Get interest rate from form
-                              @RequestParam("loanDurationMonths") Integer loanDurationMonths, // NEW: Get duration from form
+                              @RequestParam("approvedAmount") BigDecimal approvedAmount,
+                              @RequestParam("interestRate") BigDecimal interestRate,
+                              @RequestParam("loanDurationMonths") Integer loanDurationMonths,
                               @AuthenticationPrincipal User adminUser,
                               RedirectAttributes redirectAttributes) {
         try {

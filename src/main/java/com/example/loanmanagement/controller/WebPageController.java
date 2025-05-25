@@ -2,13 +2,14 @@ package com.example.loanmanagement.controller;
 
 import com.example.loanmanagement.dto.LoanApplicationRequest;
 import com.example.loanmanagement.dto.RegistrationRequest;
-import com.example.loanmanagement.entity.Role;
-import com.example.loanmanagement.entity.User;
 import com.example.loanmanagement.entity.Loan;
 import com.example.loanmanagement.entity.Repayment;
+import com.example.loanmanagement.entity.Role;
+import com.example.loanmanagement.entity.User;
 import com.example.loanmanagement.service.LoanService;
 import com.example.loanmanagement.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,9 +19,11 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.Valid;
+import java.util.ArrayList; // Import ArrayList
 import java.util.List;
 import java.util.Optional;
 
@@ -80,10 +83,11 @@ public class WebPageController {
     @GetMapping("/dashboard")
     public String dashboard(@AuthenticationPrincipal User currentUser, Model model) {
         if (currentUser != null) {
-            model.addAttribute("user", currentUser); // This 'user' is fine, it's just a model attribute name
+            model.addAttribute("user", currentUser);
             model.addAttribute("firstName", currentUser.getFirstName());
             model.addAttribute("lastName", currentUser.getLastName());
             model.addAttribute("email", currentUser.getEmail());
+            // Optional: Add counts for pending/approved loans if you want to display on dashboard
         } else {
             return "redirect:/login";
         }
@@ -109,9 +113,8 @@ public class WebPageController {
         }
 
         if (bindingResult.hasErrors()) {
-            // Add existing request to flash attributes to pre-fill form fields upon redirect
             redirectAttributes.addFlashAttribute("loanApplicationRequest", request);
-            redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.loanApplicationRequest", bindingResult); // Keep this to pass errors
+            redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.loanApplicationRequest", bindingResult);
             redirectAttributes.addFlashAttribute("error", "Please correct the errors in your application.");
             return "redirect:/apply-loan";
         }
@@ -122,12 +125,12 @@ public class WebPageController {
             return "redirect:/my-loans";
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
-            redirectAttributes.addFlashAttribute("loanApplicationRequest", request); // Pass back request on error
+            redirectAttributes.addFlashAttribute("loanApplicationRequest", request);
             return "redirect:/apply-loan";
         } catch (Exception e) {
             e.printStackTrace();
             redirectAttributes.addFlashAttribute("error", "An unexpected error occurred during loan application.");
-            redirectAttributes.addFlashAttribute("loanApplicationRequest", request); // Pass back request on error
+            redirectAttributes.addFlashAttribute("loanApplicationRequest", request);
             return "redirect:/apply-loan";
         }
     }
@@ -137,11 +140,8 @@ public class WebPageController {
         if (currentUser == null) {
             return "redirect:/login";
         }
-
-        // CORRECTED LINE: Call the updated service method
         List<Loan> userLoans = loanService.getLoansByCustomer(currentUser);
         model.addAttribute("loans", userLoans);
-
         return "my-loans";
     }
 
@@ -162,16 +162,24 @@ public class WebPageController {
 
         Loan loan = loanOptional.get();
 
-        // CORRECTED LINE: Use getCustomer() as the field was renamed in Loan entity
+        // Security check: Ensure the loan belongs to the current user
         if (!loan.getCustomer().getId().equals(currentUser.getId())) {
             redirectAttributes.addFlashAttribute("error", "You are not authorized to view this loan.");
             return "redirect:/my-loans";
         }
 
-        List<Repayment> repayments = loanService.getRepaymentsForLoan(loan);
-
         model.addAttribute("loan", loan);
-        model.addAttribute("repayments", repayments);
+
+        // Fetch repayments only if the loan is in a state where a schedule exists
+        if (loan.getStatus() == Loan.LoanStatus.APPROVED ||
+                loan.getStatus() == Loan.LoanStatus.DISBURSED ||
+                loan.getStatus() == Loan.LoanStatus.PAID ||
+                loan.getStatus() == Loan.LoanStatus.OVERDUE) {
+            List<Repayment> repayments = loanService.getRepaymentsForLoan(loan);
+            model.addAttribute("repayments", repayments);
+        } else {
+            model.addAttribute("repayments", new ArrayList<>()); // Provide an empty list
+        }
 
         return "loan-details";
     }
